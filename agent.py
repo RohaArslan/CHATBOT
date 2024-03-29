@@ -2,13 +2,53 @@ from langchain.agents import AgentExecutor, create_react_agent
 from langchain import hub
 from llm import llm
 from langchain.tools import Tool
+from langchain.prompts import PromptTemplate
 # Include the LLM from a previous lesson
+agent_prompt = PromptTemplate.from_template("""
+You are an expert on Game of Thrones providing information about characters, houses, and relationships in the series.
+Be as helpful as possible and return as much information as possible.
+Do not answer any questions that do not relate to Game of Thrones or its characters, houses, or relationships.
+
+Do not answer any questions using your pre-trained knowledge, only use the information provided in the context.
+
+
+TOOLS:
+------
+
+You have access to the following tools:
+
+{tools}
+
+To use a tool, please use the following format:
+
+```
+Thought: Do I need to use a tool? Yes
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+```
+
+When you have a response to say to the Human, or if you do not need to use a tool, you MUST use the format:
+
+```
+Thought: Do I need to use a tool? No
+Final Answer: [your response here]
+```
+
+Begin!
+
+Previous conversation history:
+{chat_history}
+
+New input: {input}
+{agent_scratchpad}
+""")
 tools = [
     Tool.from_function(
         name="General Chat",
         description="For general chat not covered by other tools",
         func=llm.invoke,
-        return_direct=True
+        return_direct=False
     )
 ]
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
@@ -34,5 +74,6 @@ def generate_response(prompt):
     """
 
     response = agent_executor.invoke({"input": prompt})
+    final_response = response.get('output', 'No response')
 
     return response['output']
