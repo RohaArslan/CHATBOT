@@ -2,16 +2,47 @@ from langchain.agents import AgentExecutor, create_react_agent
 from langchain import hub
 from llm import llm
 from langchain.tools import Tool
+from Tools.vector import kg_qa
 from langchain.prompts import PromptTemplate
 # Include the LLM from a previous lesson
+from langchain.prompts import PromptTemplate
+tools = [
+    Tool.from_function(
+        name="General Chat",
+        description="For general chat not covered by other tools",
+        func=llm.invoke,
+        return_direct=True
+        ),
+    Tool.from_function(
+        name="Vector Search Index",  # (1)
+        description="Provides information about movie plots using Vector Search", # (2)
+        func = kg_qa, # (3)
+        return_direct=True
+    )
+]
+from langchain.chains.conversation.memory import ConversationBufferWindowMemory
+memory = ConversationBufferWindowMemory(
+    memory_key='chat_history',
+    k=5,
+    return_messages=True,
+)
+from llm import llm
+
 agent_prompt = PromptTemplate.from_template("""
-You are an expert on Game of Thrones providing information about characters, houses, and relationships in the series.
+You are a Game of Thrones expert providing information about the series.
 Be as helpful as possible and return as much information as possible.
-Do not answer any questions that do not relate to Game of Thrones or its characters, houses, or relationships.
+Do not answer any questions that do not relate to Game of Thrones.
 
 Do not answer any questions using your pre-trained knowledge, only use the information provided in the context.
 
+TOOLS:
+------
 
+You have access to the following tools:
+
+{tools}
+
+To use a tool, please use the following format:
 TOOLS:
 ------
 
@@ -43,23 +74,6 @@ Previous conversation history:
 New input: {input}
 {agent_scratchpad}
 """)
-tools = [
-    Tool.from_function(
-        name="General Chat",
-        description="For general chat not covered by other tools",
-        func=llm.invoke,
-        return_direct=False
-    )
-]
-from langchain.chains.conversation.memory import ConversationBufferWindowMemory
-memory = ConversationBufferWindowMemory(
-    memory_key='chat_history',
-    k=5,
-    return_messages=True,
-)
-from llm import llm
-
-agent_prompt = hub.pull("hwchase17/react-chat")
 agent = create_react_agent(llm, tools, agent_prompt)
 agent_executor = AgentExecutor(
     agent=agent,
