@@ -2,7 +2,8 @@ from langchain.agents import AgentExecutor, create_react_agent
 from langchain import hub
 from llm import llm
 from langchain.tools import Tool
-from Tools.vector import kg_qa
+from Tools.cypher import cypher_qa
+
 from langchain.prompts import PromptTemplate
 # Include the LLM from a previous lesson
 from langchain.prompts import PromptTemplate
@@ -11,14 +12,15 @@ tools = [
         name="General Chat",
         description="For general chat not covered by other tools",
         func=llm.invoke,
-        return_direct=True
+        return_direct=False
         ),
     Tool.from_function(
-        name="Vector Search Index",  # (1)
-        description="Provides information about movie plots using Vector Search", # (2)
-        func = kg_qa, # (3)
-        return_direct=True
-    )
+        name="Graph Cypher QA Chain",  # (1)
+        description="",  # (2)
+        func=cypher_qa,  # (3)
+        return_direct=False
+    ),
+
 ]
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
 memory = ConversationBufferWindowMemory(
@@ -26,21 +28,18 @@ memory = ConversationBufferWindowMemory(
     k=5,
     return_messages=True,
 )
-from llm import llm
+
 
 agent_prompt = PromptTemplate.from_template("""
-You are a Game of Thrones expert providing information about the series.
-Be as helpful as possible and return as much information as possible.
-Do not answer any questions that do not relate to Game of Thrones.
-
+You are a twitter expert providing assistance on different tweets.
+Your goal is to gather as much relevant information as possible and provide helpful insights to provide information about tweets.
+Only answer questions related to the twitter and tweets.
+Do not answer any questions that do not relate to twitter, tweets, retweets, and followers
 Do not answer any questions using your pre-trained knowledge, only use the information provided in the context.
 
-TOOLS:
-------
+Fine Tuning:
 
-You have access to the following tools:
-
-{tools}
+If user writes "post" it means "tweet".
 
 To use a tool, please use the following format:
 TOOLS:
