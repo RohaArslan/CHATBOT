@@ -9,7 +9,7 @@ from solutions.graph import graph
 
 # tag::prompt[]
 CYPHER_GENERATION_TEMPLATE = """
-You are an expert Neo4j Developer translating user questions into Cypher to answer questions about movies and provide recommendations.
+You are an expert Neo4j Developer translating user questions into Cypher to answer questions about twitter and provide recommendations.
 Convert the user's question based on the schema.
 
 Use only the provided relationship types and properties in the schema.
